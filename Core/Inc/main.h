@@ -57,6 +57,14 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SCREEN_RST_Pin GPIO_PIN_0
+#define SCREEN_RST_GPIO_Port GPIOB
+#define SCREEN_DC_Pin GPIO_PIN_1
+#define SCREEN_DC_GPIO_Port GPIOB
+#define SCREEN_CS_Pin GPIO_PIN_10
+#define SCREEN_CS_GPIO_Port GPIOB
+#define SCREEN_LED_Pin GPIO_PIN_11
+#define SCREEN_LED_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

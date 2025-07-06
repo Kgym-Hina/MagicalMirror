@@ -48,11 +48,16 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+        ST7735/Src/fonts.c
+        ST7735/Src/GFX_FUNCTIONS.c
+        ST7735/Src/st7735.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+        ST7735/Inc
+        ST7735/Src
 )
 
 # Add project symbols (macros)

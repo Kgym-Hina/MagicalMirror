@@ -21,7 +21,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <string.h>
+#include "st7735.h"
+#include "GFX_FUNCTIONS.h"
+#include "fonts.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,6 +44,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
 
@@ -47,6 +52,8 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -60,6 +67,91 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
+int main(void)
+{
+
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_SPI1_Init();
+  /* USER CODE BEGIN 2 */
+
+  // 在 SPI1 初始化 ST7735 LCD
+  ST7735_Init();
+
+  // B11 - Backlight - 打开背光
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
+
+  // 屏幕重置为黑色
+  ST7735_FillScreenFast(ST7735_BLACK);
+
+  // 定义初始时间 (00:00)
+  uint8_t hour = 0;
+  uint8_t minute = 0;
+  uint8_t second = 0;
+
+  char timeStr[9]; // 时间字符串缓冲区
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    // 格式化时间并显示
+    sprintf(timeStr, "%02d:%02d:%02d", hour, minute, second);
+    
+    // 获取字符串宽度并计算居中位置
+    uint8_t stringWidth = 11 * strlen(timeStr); // 11 为使用字体宽度
+    uint8_t xPosition = (ST7735_WIDTH - stringWidth) / 2; // 计算居中对齐
+
+    // // 清屏以避免残留文字
+    // ST7735_FillScreenFast(ST7735_BLACK);
+    
+    // 显示居中的时间字符串
+    ST7735_WriteString(xPosition, 50, timeStr, Font_11x18, ST7735_WHITE, ST7735_BLACK);
+    HAL_Delay(1000);
+
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+
+    // 设置时间更新
+    second++;
+    if (second >= 60) {
+        second = 0;
+        minute++;
+        if (minute >= 60) {
+            minute = 0;
+            hour++;
+            if (hour >= 24) {
+                hour = 0;
+            }
+        }
+    }
+
+  }
+  /* USER CODE END 3 */
+}
 
 /**
   * @brief System Clock Configuration
@@ -95,6 +187,75 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_1LINE;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+
+  /* USER CODE END MX_GPIO_Init_1 */
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, SCREEN_RST_Pin|SCREEN_DC_Pin|SCREEN_CS_Pin|SCREEN_LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : SCREEN_RST_Pin SCREEN_DC_Pin SCREEN_CS_Pin SCREEN_LED_Pin */
+  GPIO_InitStruct.Pin = SCREEN_RST_Pin|SCREEN_DC_Pin|SCREEN_CS_Pin|SCREEN_LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
