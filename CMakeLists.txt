@@ -35,7 +35,9 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 enable_language(C ASM)
 
 # Create an executable object type
-add_executable(${CMAKE_PROJECT_NAME})
+add_executable(${CMAKE_PROJECT_NAME}
+        DS1307/Inc/ds1307.h
+        DS1307/Src/ds1307.c)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -51,13 +53,14 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         ST7735/Src/fonts.c
         ST7735/Src/GFX_FUNCTIONS.c
         ST7735/Src/st7735.c
+        DS1307/Src/ds1307.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
         ST7735/Inc
-        ST7735/Src
+        DS1307/Inc
 )
 
 # Add project symbols (macros)

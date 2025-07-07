@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include "ds1307.h"
 #include "st7735.h"
 #include "GFX_FUNCTIONS.h"
 #include "fonts.h"
@@ -44,6 +45,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
@@ -54,6 +57,7 @@ SPI_HandleTypeDef hspi1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -93,6 +97,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   // 在 SPI1 初始化 ST7735 LCD
@@ -104,12 +109,14 @@ int main(void)
   // 屏幕重置为黑色
   ST7735_FillScreenFast(ST7735_BLACK);
 
-  // 定义初始时间 (00:00)
-  uint8_t hour = 0;
-  uint8_t minute = 0;
-  uint8_t second = 0;
-
   char timeStr[9]; // 时间字符串缓冲区
+
+  // 初始化 DS1307 RTC
+  DS1307_Init(&hi2c1);
+  DS1307_TimeTypeDef currentTime;
+
+  // 每 10s 回写一次时间
+  static uint8_t updateCounter = 0;  // 静态变量，记录 10 秒计数
 
   /* USER CODE END 2 */
 
@@ -117,38 +124,33 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    // 格式化时间并显示
-    sprintf(timeStr, "%02d:%02d:%02d", hour, minute, second);
-    
-    // 获取字符串宽度并计算居中位置
-    uint8_t stringWidth = 11 * strlen(timeStr); // 11 为使用字体宽度
-    uint8_t xPosition = (ST7735_WIDTH - stringWidth) / 2; // 计算居中对齐
+    // 读取时间
+    if (DS1307_GetTime(&currentTime) == HAL_OK) {
+      // 格式化为 HH:MM:SS
+      sprintf(timeStr, "%02d:%02d:%02d", currentTime.hours, currentTime.minutes, currentTime.seconds);
 
-    // // 清屏以避免残留文字
-    // ST7735_FillScreenFast(ST7735_BLACK);
-    
-    // 显示居中的时间字符串
-    ST7735_WriteString(xPosition, 50, timeStr, Font_11x18, ST7735_WHITE, ST7735_BLACK);
-    HAL_Delay(1000);
+      // 居中显示
+      uint8_t strWidth = 11 * strlen(timeStr);
+      uint8_t x = (ST7735_WIDTH - strWidth) / 2;
+
+      ST7735_WriteString(x, 50, timeStr, Font_11x18, ST7735_WHITE, ST7735_BLACK);
+
+      // 每 10 秒保存一次回 RTC
+      updateCounter++;
+      if (updateCounter >= 10) {
+        DS1307_SetTime(&currentTime);
+        updateCounter = 0;
+      }
+
+    } else {
+      ST7735_WriteString(15, 50, "RTC_ERR!", Font_11x18, ST7735_RED, ST7735_BLACK);
+    }
+
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-    // 设置时间更新
-    second++;
-    if (second >= 60) {
-        second = 0;
-        minute++;
-        if (minute >= 60) {
-            minute = 0;
-            hour++;
-            if (hour >= 24) {
-                hour = 0;
-            }
-        }
-    }
-
+    HAL_Delay(1000); // 每秒更新一次
   }
   /* USER CODE END 3 */
 }
@@ -187,6 +189,40 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
