@@ -61,6 +61,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
         ST7735/Inc
         DS1307/Inc
+        ST7796S/Inc
 )
 
 # Add project symbols (macros)
