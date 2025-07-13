@@ -18,6 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
+#include "spi.h"
+#include "usart.h"
+#include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -45,19 +49,14 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
-
-SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
-
+char dtmfTimeString[16];
+DS1307_TimeTypeDef systemTime;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
-static void MX_SPI1_Init(void);
-static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -98,6 +97,7 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_I2C1_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   // 在 SPI1 初始化 ST7735 LCD
@@ -107,16 +107,12 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
 
   // 屏幕重置为黑色
-  ST7735_FillScreenFast(ST7735_BLACK);
+  ST7735_FillScreenFast(ST7735_RED);
 
   char timeStr[9]; // 时间字符串缓冲区
 
   // 初始化 DS1307 RTC
   DS1307_Init(&hi2c1);
-  DS1307_TimeTypeDef currentTime;
-
-  // 每 10s 回写一次时间
-  static uint8_t updateCounter = 0;  // 静态变量，记录 10 秒计数
 
   /* USER CODE END 2 */
 
@@ -125,22 +121,15 @@ int main(void)
   while (1)
   {
     // 读取时间
-    if (DS1307_GetTime(&currentTime) == HAL_OK) {
+    if (DS1307_GetTime(&systemTime) == HAL_OK) {
       // 格式化为 HH:MM:SS
-      sprintf(timeStr, "%02d:%02d:%02d", currentTime.hours, currentTime.minutes, currentTime.seconds);
+      sprintf(timeStr, "%02d:%02d:%02d", systemTime.hours, systemTime.minutes, systemTime.seconds);
 
       // 居中显示
       uint8_t strWidth = 11 * strlen(timeStr);
       uint8_t x = (ST7735_WIDTH - strWidth) / 2;
 
       ST7735_WriteString(x, 50, timeStr, Font_11x18, ST7735_WHITE, ST7735_BLACK);
-
-      // 每 10 秒保存一次回 RTC
-      updateCounter++;
-      if (updateCounter >= 10) {
-        DS1307_SetTime(&currentTime);
-        updateCounter = 0;
-      }
 
     } else {
       ST7735_WriteString(15, 50, "RTC_ERR!", Font_11x18, ST7735_RED, ST7735_BLACK);
@@ -154,6 +143,7 @@ int main(void)
   }
   /* USER CODE END 3 */
 }
+
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -190,109 +180,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
-}
-
-/**
-  * @brief SPI1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_SPI1_Init(void)
-{
-
-  /* USER CODE BEGIN SPI1_Init 0 */
-
-  /* USER CODE END SPI1_Init 0 */
-
-  /* USER CODE BEGIN SPI1_Init 1 */
-
-  /* USER CODE END SPI1_Init 1 */
-  /* SPI1 parameter configuration*/
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_1LINE;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 10;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN SPI1_Init 2 */
-
-  /* USER CODE END SPI1_Init 2 */
-
-}
-
-/**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_GPIO_Init(void)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  /* USER CODE BEGIN MX_GPIO_Init_1 */
-
-  /* USER CODE END MX_GPIO_Init_1 */
-
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, SCREEN_RST_Pin|SCREEN_DC_Pin|SCREEN_CS_Pin|SCREEN_LED_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : SCREEN_RST_Pin SCREEN_DC_Pin SCREEN_CS_Pin SCREEN_LED_Pin */
-  GPIO_InitStruct.Pin = SCREEN_RST_Pin|SCREEN_DC_Pin|SCREEN_CS_Pin|SCREEN_LED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN MX_GPIO_Init_2 */
-
-  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */

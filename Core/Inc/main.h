@@ -61,10 +61,19 @@ void Error_Handler(void);
 #define SCREEN_RST_GPIO_Port GPIOB
 #define SCREEN_DC_Pin GPIO_PIN_1
 #define SCREEN_DC_GPIO_Port GPIOB
-#define SCREEN_CS_Pin GPIO_PIN_10
-#define SCREEN_CS_GPIO_Port GPIOB
 #define SCREEN_LED_Pin GPIO_PIN_11
 #define SCREEN_LED_GPIO_Port GPIOB
+#define DTMF_4_Pin GPIO_PIN_9
+#define DTMF_4_GPIO_Port GPIOA
+#define DTMF_3_Pin GPIO_PIN_10
+#define DTMF_3_GPIO_Port GPIOA
+#define DTMF_2_Pin GPIO_PIN_11
+#define DTMF_2_GPIO_Port GPIOA
+#define DTMF_1_Pin GPIO_PIN_12
+#define DTMF_1_GPIO_Port GPIOA
+#define DTMF_TRIG_Pin GPIO_PIN_15
+#define DTMF_TRIG_GPIO_Port GPIOA
+#define DTMF_TRIG_EXTI_IRQn EXTI15_10_IRQn
 
 /* USER CODE BEGIN Private defines */
 
