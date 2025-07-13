@@ -284,7 +284,6 @@ void EXTI15_10_IRQHandler(void)
   // 检查并处理完整帧
   process_dtmf_frame();
 
-
   /* USER CODE END EXTI15_10_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(DTMF_TRIG_Pin);
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */

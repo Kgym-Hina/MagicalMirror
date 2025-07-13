@@ -100,47 +100,45 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  // 在 SPI1 初始化 ST7735 LCD
-  ST7735_Init();
+    // 在 SPI1 初始化 ST7735 LCD
+    ST7735_Init();
 
-  // B11 - Backlight - 打开背光
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
+    // B11 - Backlight - 打开背光
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
 
-  // 屏幕重置为黑色
-  ST7735_FillScreenFast(ST7735_RED);
+    // 屏幕重置为黑色
+    ST7735_FillScreenFast(ST7735_BLACK);
 
-  char timeStr[9]; // 时间字符串缓冲区
-
-  // 初始化 DS1307 RTC
-  DS1307_Init(&hi2c1);
+    // 初始化 DS1307 RTC
+    DS1307_Init(&hi2c1);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    // 读取时间
-    if (DS1307_GetTime(&systemTime) == HAL_OK) {
-      // 格式化为 HH:MM:SS
-      sprintf(timeStr, "%02d:%02d:%02d", systemTime.hours, systemTime.minutes, systemTime.seconds);
+    while (1) {
+        // 读取时间
+        char timeStr[9]; // 时间字符串缓冲区
+        if (DS1307_GetTime(&systemTime) == HAL_OK) {
+            // 格式化为 HH:MM:SS
+            sprintf(timeStr, "%02d:%02d:%02d", systemTime.hours, systemTime.minutes, systemTime.seconds);
 
-      // 居中显示
-      uint8_t strWidth = 11 * strlen(timeStr);
-      uint8_t x = (ST7735_WIDTH - strWidth) / 2;
+            // 居中显示
+            uint8_t strWidth = 11 * strlen(timeStr);
+            uint8_t x = (ST7735_WIDTH - strWidth) / 2;
 
-      ST7735_WriteString(x, 50, timeStr, Font_11x18, ST7735_WHITE, ST7735_BLACK);
+            ST7735_WriteString(x, 50, timeStr, Font_11x18, ST7735_WHITE, ST7735_BLACK);
+        } else {
+            ST7735_WriteString(15, 50, "RTC_ERR!", Font_11x18, ST7735_RED, ST7735_BLACK);
+        }
 
-    } else {
-      ST7735_WriteString(15, 50, "RTC_ERR!", Font_11x18, ST7735_RED, ST7735_BLACK);
-    }
-
+        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    HAL_Delay(1000); // 每秒更新一次
-  }
+        HAL_Delay(1000); // 每秒更新一次
+    }
   /* USER CODE END 3 */
 }
 
@@ -193,11 +191,10 @@ void SystemClock_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+    /* User can add his own implementation to report the HAL error return state */
+    __disable_irq();
+    while (1) {
+    }
   /* USER CODE END Error_Handler_Debug */
 }
 
